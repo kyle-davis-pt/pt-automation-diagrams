@@ -39,7 +39,22 @@ Everything marked `[VERIFIED 12 Oct 2026]` was read through the n8n gateway
 That last line is the staleness test. A HubSpot flow has a `revisionId`, but the portal has no
 single version number, so the pin is a hash over every flow's `(id, name, isEnabled, revisionId,
 updatedAt)`. **If a later run computes a different sha, the portal moved and this diagram is
-stale.** It is checkable by anyone who can call the gateway.
+stale.**
+
+A description of a hash is not a reproducible test, so here is the exact canonical form:
+
+```python
+rows = sorted((str(f["id"]), f.get("name") or "", bool(f.get("isEnabled")),
+               str(f.get("revisionId")), str(f.get("updatedAt")))
+              for f in GET("/automation/v4/flows"))
+sha256(json.dumps(rows, separators=(",", ":"), sort_keys=True).encode()).hexdigest()
+```
+
+`verify_pin.py` (attached to PRO-46, beside `gw.py`) runs exactly this and exits 0 for FRESH,
+1 for STALE. It needs only the gateway token and makes one read-only list call.
+
+**Re-verified 2026-10-12T11:16Z** by a later, independent run: 816 flows, 510 enabled,
+sha `cefd4b5b…` — identical. The portal had not moved in the four hours since the build read.
 
 Assets read in the same window:
 
@@ -65,11 +80,14 @@ the operator's own map; overloading it would destroy both signals.
 
 ## The four requirements
 
-1. **Links.** 1,509 boxes carry an mxGraph `link=`. A flow box opens that flow in HubSpot, an
-   asset box opens that asset, navigation boxes jump between pages. The **flow** URL format is
-   VERIFIED (taken from a URL the portal itself generated). **List, form and property URL formats
-   are INFERRED and have never been clicked** — nobody here has a browser. One click each settles
-   them, and they live in single functions of the generator.
+1. **Links.** 1,509 boxes carry an mxGraph `link=`: **1,406 flow links** (816 distinct flows,
+   some drawn on more than one page), **45 property links**, **18 list links** and **40 internal
+   page jumps**. The **flow** URL format is VERIFIED (taken from a URL the portal itself
+   generated). **The property and list formats are INFERRED and have never been clicked** —
+   nobody here has a browser. One click each settles them, and they live in single functions of
+   the generator. **Forms are drawn but are not clickable:** no form URL appears anywhere in the
+   file, so listing forms among the inferred link formats — as an earlier draft of this note did
+   — was wrong.
 2. **Dead ends — page 15.** Now including the half stage 1 could not deliver:
    **397 empty branch arms across 85 flows (46 enabled)**. A branch that names a cohort,
    matches it, and connects to nothing. Stage 1 had no branch tree and said so; the live
@@ -123,6 +141,11 @@ README rule 5 — these are recorded as named gaps on **page 21**, not quietly d
 - all 40 internal page links resolve
 - **all 816 live flow ids appear on the map**
 - deterministic: three builds under randomised `PYTHONHASHSEED` produced byte-identical files
+- **independently re-checked on 2026-10-12 from the published bytes**, not from the build's own
+  in-memory state: 22 diagrams, 0 duplicate ids within a page, 0 dangling edge endpoints, 0
+  vertices without geometry, 1,710 boxes of which 1,509 are clickable, 40/40 page links resolve,
+  all 816 live flow ids present. The committed file and the copy attached to PRO-46 have the
+  same git blob sha, so the publish is a copy and not a re-derivation.
 
 **I have no renderer here and did not open this at app.diagrams.net.** "It renders" is not a claim
 this note makes. One File → Open settles it.
