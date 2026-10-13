@@ -6,8 +6,21 @@ Tradie* — that is the GitHub connection's identity, not the agent's. The agent
 because the `author` field cannot carry it.
 
 **This file is generated. Do not hand-edit it.** Edit `build_map_stage2.py` and re-run.
-Output is deterministic, so a regeneration that changes nothing produces a zero-byte diff
-and any diff you read in a pull request is a real upstream change.
+Output is deterministic: repeated builds under randomised `PYTHONHASHSEED` are byte-identical.
+
+**One honest qualification to a claim an earlier version of this note made.** "A regeneration
+that changes nothing produces a zero-byte diff" was not true, for two reasons found on 13 Oct:
+
+1. The run date was stamped onto ~1,400 boxes, so rebuilding on a different day produced a
+   ~1,400-line diff with no config change behind it. **Fixed** — the per-box tag is now
+   `[VERIFIED]` with no date, and the date lives on the page-00 legend, the page headers, the
+   source pin and this note. A date-only rebuild now moves **16 lines**, all of them headers
+   that are genuinely about when the read happened.
+2. Page 19's most-referenced-lists panel carries **live list membership sizes and reference
+   counts**, which move as contacts flow in. Expect ~18 lines of churn there on any rebuild.
+   This is real data, not generator noise, so it is kept and flagged rather than removed.
+
+Outside those 18 lines, a diff you read in a pull request is a real upstream change.
 
 ## What this is
 
@@ -21,20 +34,20 @@ A clickable logic map of the Profitable Tradie HubSpot portal (id `21538852`), b
 | Edges | 129 |
 | Clickable boxes | 1,509 |
 | Flows represented | **816 of 816** — every live flow, by name and id |
-| Bytes | 1,749,262 |
-| sha256 | `7a46a4e241eb1d6cb81a82bd2bcf1c833e034746a18415eeb160b0a943c703e0` |
+| Bytes | 1,732,524 |
+| sha256 | `4698137678a12da3826c67d6ced690fa5e028f0233a2498a4cec86725de3e7bf` |
 
 Plain uncompressed mxGraph XML, so git diffs it and **Extras → Edit Diagram** works.
 
-## Source pin — read 2026-10-12T06:58:57Z
+## Source pin — read 2026-10-13T00:30:53Z
 
-Everything marked `[VERIFIED 12 Oct 2026]` was read through the n8n gateway
+Everything marked `[VERIFIED]` was read on **13 Oct 2026** through the n8n gateway
 **`[GATEWAY] HubSpot Read`**, workflow `fCFvIDxxSi2F4re3`:
 
 - gateway `versionId` **`b9418bd0-c3c4-4d73-9b62-c4bc21487b83`**, `updatedAt` **2026-10-12T01:56:22.045Z**, active: true
 - `GET /automation/v4/flows` → **816 flows** (510 enabled)
 - `GET /automation/v4/flows/{id}` → **816 full definitions, 0 errors**
-- **sha256 of the canonical flow set: `cefd4b5b7429e58ee83540a460ef2247c311478e3fcd6f814d2d30ecfd0ae553`**
+- **sha256 of the canonical flow set: `437b09c6eb031ddc85157520dbd86d9b2a5bd67a8fdbeca2119ba359ec54d264`**
 
 That last line is the staleness test. A HubSpot flow has a `revisionId`, but the portal has no
 single version number, so the pin is a hash over every flow's `(id, name, isEnabled, revisionId,
@@ -53,13 +66,22 @@ sha256(json.dumps(rows, separators=(",", ":"), sort_keys=True).encode()).hexdige
 `verify_pin.py` (attached to PRO-46, beside `gw.py`) runs exactly this and exits 0 for FRESH,
 1 for STALE. It needs only the gateway token and makes one read-only list call.
 
-**Re-verified 2026-10-12T11:16Z** by a later, independent run: 816 flows, 510 enabled,
-sha `cefd4b5b…` — identical. The portal had not moved in the four hours since the build read.
+### The pin has already earned its keep
+
+| when | sha | verdict |
+|---|---|---|
+| 2026-10-12T06:58Z — stage-2 build | `cefd4b5b…` | — |
+| 2026-10-12T11:16Z — re-check | `cefd4b5b…` | FRESH |
+| **2026-10-13T00:26Z — re-check** | `437b09c6…` | **STALE** |
+| 2026-10-13T00:30Z — this rebuild | `437b09c6…` | — |
+
+The 13 Oct check caught a real portal change before the map was merged. See
+**What moved between 12 and 13 Oct** below.
 
 Assets read in the same window:
 
 - **2,310 property definitions** across calls, contacts, deals, meetings, notes, tasks
-- **1,051 lists**, **175 forms**, **13 deal pipelines**, **79 owners**
+- **1,055 lists**, **175 forms**, **13 deal pipelines**, **79 owners**
 - contact lifecycle pipeline, read live
 
 The **1 Sep 2026** n8n extract (data table `47SatIDJkRTKJYRF`, 767 rows) is used on page 20
@@ -70,7 +92,7 @@ The **1 Sep 2026** n8n extract (data table `47SatIDJkRTKJYRF`, 767 rows) is used
 **Provenance is the border and the bracket tag, never colour.** Colour already carries meaning in
 the operator's own map; overloading it would destroy both signals.
 
-- solid green, thick — `[VERIFIED 12 Oct 2026]` read from live HubSpot config
+- solid green, thick — `[VERIFIED]` read from live HubSpot config (date on the page-00 legend)
 - dashed amber — `[CACHE 1 Sep 2026]` from the stale extract
 - dotted purple — `[OPERATOR]` an operator claim, not machine-checked
 - dashed red, thick — `[BLIND SPOT]` a known gap
@@ -100,6 +122,24 @@ the operator's own map; overloading it would destroy both signals.
    layer (forms, landing pages, lists, unified events, email events, integration events, ads),
    properties, lists with their live reference counts, and the webhook / custom-code / SMS actions
    that reach outside HubSpot.
+
+## What moved between 12 and 13 Oct
+
+The pin went STALE between the accepted build and this one. Every difference is accounted for:
+
+- **Six `[FUNNEL] Lead Magnet Delivery` flows were edited on 12 Oct between 20:23Z and 20:30Z** —
+  a seven-minute pass by one person. Each gained **exactly one extra landing-page enrolment
+  trigger**; no action count changed, no flow was switched on or off, none was created or deleted.
+  `1870447191` (1→2 pages), `585947220` (5→6), `1757785774` (2→3), `1621219877` (2→3),
+  `1650003063` (2→3), `234616714` (3→4).
+- **Three of the six were renamed**: `1757785774` → *…Email Marketing Template **V2***,
+  `1650003063` → *…Job Description Template**s***, `234616714` → *…QA Checklist **(End of Job)***.
+- Portal-wide, distinct landing pages that trigger a flow went **159 → 165** — exactly those six.
+- **Lists went 1,051 → 1,055**; orphan lists 944 → 948. The four new lists are not referenced by
+  any flow yet.
+- Live list membership sizes and reference counts on page 19 moved, as they do every day.
+
+Nothing structural changed. The substantive diff against the 12 Oct build is **40 cell-lines**.
 
 ## What stage 2 changed that matters
 
@@ -140,7 +180,10 @@ README rule 5 — these are recorded as named gaps on **page 21**, not quietly d
 - **zero overlapping boxes**
 - all 40 internal page links resolve
 - **all 816 live flow ids appear on the map**
-- deterministic: three builds under randomised `PYTHONHASHSEED` produced byte-identical files
+- deterministic: builds under randomised `PYTHONHASHSEED` produce byte-identical files
+- **the whole pipeline was re-run from scratch on 13 Oct** — `fetch.py` → `analyze.py` →
+  `build_map_stage2.py` — and reproduced the 12 Oct file to within the 40 cell-lines of real
+  portal drift listed above, plus an ordering difference in two panels on page 20 (see below)
 - **independently re-checked on 2026-10-12 from the published bytes**, not from the build's own
   in-memory state: 22 diagrams, 0 duplicate ids within a page, 0 dangling edge endpoints, 0
   vertices without geometry, 1,710 boxes of which 1,509 are clickable, 40/40 page links resolve,
@@ -150,6 +193,14 @@ README rule 5 — these are recorded as named gaps on **page 21**, not quietly d
 **I have no renderer here and did not open this at app.diagrams.net.** "It renders" is not a claim
 this note makes. One File → Open settles it.
 
+### One known cosmetic difference from the 12 Oct build
+
+Page 20's *FLIPPED STATE* and *ACTION COUNT CHANGED* panels list the same flows in a different
+order. The original fetch step was never captured, so its drift-list ordering could not be
+reproduced; `fetch.py` now sorts both lists by flow id, which is deterministic and stable from
+here on. The panels are truncated to 12 entries, so the order change swaps which 12 of the 20
+`action_drift` flows are shown. No flow's data changed.
+
 ## n8n layer
 
 All 13 n8n workflows were pinned with their real `versionId` in the stage-1 note and are unchanged.
@@ -158,12 +209,24 @@ The gateway itself is pinned above.
 ## Regenerating
 
 ```
-python3 build_map_stage2.py      # reads analysis.json + the *_live.json reads, writes the .drawio
+export N8N_GATEWAY_TOKEN=...   # HubSpot, through the gateway
+export N8N_API_KEY=...         # only for the 1 Sep drift baseline table
+python3 fetch.py               # every live read -> flows_live.json, defs/, lists, forms, pin, drift
+python3 analyze.py             # defs/*.json -> analysis.json
+python3 build_map_stage2.py    # -> hubspot-logic-map.drawio
+python3 verify_map.py          # mechanical checks; exits non-zero on a structural fault
 ```
 
-`build_map_stage2.py` and `analyze.py` are attached to Paperclip task **PRO-46**. The raw reads are
-not committed here because they contain contact-shaped data; the diagram names systems, flows,
-lists and properties — **not people** (README rule 6).
+`fetch.py`, `analyze.py`, `build_map_stage2.py`, `verify_map.py`, `verify_pin.py` and `gw.py` are
+attached to Paperclip task **PRO-46**.
+
+**`fetch.py` is new on 13 Oct and closes a real gap.** The stage-2 artifact set shipped the
+*builder* but not the *fetcher*, so "the rebuild is one command" was only true for a run that
+still had the intermediate JSON on disk. It is true for anyone now. `fetch.py` was validated by
+rebuilding the 12 Oct file from scratch and accounting for every line of difference.
+
+The raw reads are not committed here because they contain contact-shaped data; the diagram names
+systems, flows, lists and properties — **not people** (README rule 6).
 
 One caveat on that rule: a handful of flows are *named* after a person by whoever created them
 (for example `Test - Renewal Workflow - sara`). That is the flow's own name in HubSpot config, not
